@@ -62,18 +62,37 @@ def encode_image(_bytes, original_image_path, encoded_image_path):
 
     bits = [bit for byte in _bytes for bit in int_to_bits(byte)]
 
-    # checks that message isn't too long
-    encoded_bits = encode_message(bits, width*height*3)
+    num_valid = num_valid_rgb(pixels, bits)
 
-    three_at_a_time = chunk_data(encoded_bits, chunk_size=3)
+    # checks that message isn't too long for the image
+    encoded_bits = encode_message(bits, num_valid)
 
-    for i, three_bits in enumerate(three_at_a_time):
-        x = i % width
-        y = i // width
-        pixels[y][x] = encode_pixel(pixels[y][x], three_bits)
+    one_at_a_time = chunk_data(encoded_bits, chunk_size=1)
 
+    # TODO use a gpu for this
+    # put encoded_bits into image
+    for y in range(len(pixels)):
+        for x in range(len(pixels[0])):
+            color = list(pixels[y][x]) # PIL colors must be tuples, so we type cast and cast back
+            for c in range(3):
+                if is_valid(color[c]):
+                    bit = next(one_at_a_time, None)
+                    if bit is not None:
+                        color[c] = encode_rgb(color[c], bit)
+            pixels[y][x] = tuple(color)
+    
     encoded_image = to_image(pixels)
     encoded_image.save(encoded_image_path)
+
+def generate_valid_rgb_locations(pixels, bits):
+    """ 
+        bits is a generator
+    """
+    for y in range(len(pixels)):
+        for x in range(len(pixels[0])):
+            for c in range(3):
+                if is_valid(pixels[y][x][c]):
+                    yield y, x, c
 
 def decode_image(original_image_path, encoded_image_path):
     encoded_pixels = load_image_pixels(encoded_image_path)
@@ -83,11 +102,12 @@ def decode_image(original_image_path, encoded_image_path):
     width = len(encoded_pixels[0])
 
     bits = []
-    for y in range(height):
-        for x in range(width):
-            bits.extend(decode_pixel(encoded_pixels[y][x], orig_pixels[y][x]))
+    for y, x, c in generate_valid_rgb_locations(encoded_pixels):
+        decoded_bit = decode_rgb(encoded_pixels[y][x][c], orig_pixels[y][x][c])
+        bits.append(decoded_bit)
 
-    message_bits = decode_message(bits, width*height*3)
+    num_valid = num_valid_rgb(pixels, bits)
+    message_bits = decode_message(bits, num_valid)
     message_bytes = []
 
     assert len(message_bits) % 8 == 0, "message was corrupted"
@@ -119,19 +139,13 @@ def decode_message(bits, message_size):
     data_length = bits_to_int(bits[:num_length_bits])
     return bits[num_length_bits : num_length_bits + data_length]
 
-def encode_pixel(pixel, three_bits):
-    return (
-        max(pixel[0] - 1, 0) + three_bits[0],
-        max(pixel[1] - 1, 0) + three_bits[1],
-        max(pixel[2] - 1, 0) + three_bits[2],
-    )
+def encode_rgb(rgb, bit):
+    """ rgb is valid (greater than 0 and less than 254) """
+    return max(rgb - 1, 0) + bit
 
-def decode_pixel(encoded_pixel, original_pixel):
-    return [
-        encoded_pixel[0] - max(original_pixel[0] - 1, 0),
-        encoded_pixel[1] - max(original_pixel[1] - 1, 0),
-        encoded_pixel[2] - max(original_pixel[2] - 1, 0),
-    ]
+def decode_rgb(encoded, original):
+    """ rgb is valid (greater than 0 and less than 254) """
+    return encoded - max(original - 1, 0)
 
 
 def compress_message(_bytes): # TODO
@@ -219,6 +233,23 @@ def main(args):
     else:
         print_usage()
         sys.exit()
+
+def num_valid_rgb(pixels, bits):
+    """ returns number of rgb values in pixels that are suitable for image encoding """
+    counter = 0
+    for row in pixels:
+        for pixel in row:
+            for rgb in pixel:
+                if not is_valid(rgb, bit):
+                    counter += 1
+    return len(pixels) * len(pixels[0]) * 3 - counter
+
+def is_valid(rgb, bit):
+    """ checks if the sum of rgb and bit are sufficiently ambiguous.
+        Avoids "edges" of range, because these can only be
+        generated with one combination of rgb and bit
+    """
+    return 0 < rgb + bit <= 255
 
 if __name__ == "__main__":
     main(sys.argv[1:])
