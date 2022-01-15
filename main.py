@@ -148,7 +148,7 @@ def print_usage():
     print("")
     print("Demo:")
     print("   python main.py encode \"Hi, I'm kyle\!\" landscape.jpeg encoded.png")
-    print("   python main.py encode_file bee_movie_excerpt.txt landscape.jpeg encoded.png")
+    print("   python main.py encode_file bee_movie.txt landscape.jpeg encoded.png")
     print("   python main.py decode landscape.jpeg encoded.png")
     print("")
 
