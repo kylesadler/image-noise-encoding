@@ -1,4 +1,5 @@
 import os
+import sys
 from PIL import Image
 from math import ceil, log2
 from utils import *
@@ -139,24 +140,62 @@ def compress_message(_bytes): # TODO
 def decompress_message(_bytes): # TODO
     pass
 
+def print_usage():
+    print("Usage:")
+    print("   Encode a message: python main.py encode [message] [input image] [output image]")
+    print("   Decode a message: python main.py decode [original image] [encoded image]")
+    print("")
+    print("Demo:")
+    print("   python main.py encode \"Hi, I'm kyle\!\" landscape.jpeg encoded.png")
+    print("   python main.py decode landscape.jpeg encoded.png")
+    print("")
 
-def main():
-    input_message = "Hi, I'm kyle!"
-    encoded_path = "encoded.png"
+
+def encode_command(args):
+
+    if len(args) != 3:
+        print_usage()
+        sys.exit()
+
+    input_message = args[0]
+    image_path = args[1]
+    encoded_path = args[2]
     
     print(f"Input message: {input_message}")
-    print(f"Encoding into image {encoded_path} ...")
+    print(f"Encoding message into {image_path} ...")
 
-    encode_image(input_message.encode("UTF-8"), "landscape.jpeg", encoded_path)
+    encode_image(input_message.encode("UTF-8"), image_path, encoded_path)
+    
+    print(f"Successfully created {encoded_path}")
 
-    print(f"Decoding ...")
 
-    output_message = decode_image("landscape.jpeg", encoded_path).decode("UTF-8")
+def decode_command(args):
+    if len(args) != 2:
+        print_usage()
+        sys.exit()
+
+    image_path = args[0]
+    encoded_path = args[1]
+
+    print(f"Decoding message in {encoded_path}")
+
+    output_message = decode_image(image_path, encoded_path).decode("UTF-8")
 
     print(f"Decoded message: {output_message}")
-    print(f"Sucess: {input_message == output_message}")
 
+def main(args):
+    if len(args) == 0:
+        print_usage()
+        sys.exit()
+
+    if args[0] == "encode":
+        encode_command(args[1:])
+    elif args[0] == "decode":
+        decode_command(args[1:])
+    else:
+        print_usage()
+        sys.exit()
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
     
