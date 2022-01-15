@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 from PIL import Image
 from math import ceil, log2
 from utils import *
@@ -140,17 +141,80 @@ def compress_message(_bytes): # TODO
 def decompress_message(_bytes): # TODO
     pass
 
+
+def count_potential_collisions(pixels):
+    """ returns number of rgb values that may have unambiguous encoding """
+    counter = 0
+    for row in pixels:
+        for pixel in row:
+            for rgb in pixel:
+                if potential_collision(rgb):
+                    counter += 1
+    return counter
+
+def potential_collision(rgb):
+    """ checks if the rgb has the potential to be encoded unambiguously.
+        i.e. if the sum of rgb and a bit could be 0 or 256
+    """
+    return 0 == rgb or rgb == 255
+
+
 def print_usage():
     print("Usage:")
     print("   Encode a message: python main.py encode [message] [input image] [output image]")
-    print("   Encode a message: python main.py encode_file [file] [input image] [output image]")
+    print("   Encode a file: python main.py encode_file [file] [input image] [output image]")
+    print("   Preprocess an image to reduce encoding collisions: python main.py prerpocess [input image] [output image]")
     print("   Decode a message: python main.py decode [original image] [encoded image]")
     print("")
     print("Demo:")
     print("   python main.py encode \"Hi, I'm kyle\!\" landscape.jpeg encoded.png")
     print("   python main.py encode_file bee_movie.txt landscape.jpeg encoded.png")
+    print("   python main.py preprocess landscape.jpeg landscape.jpeg")
     print("   python main.py decode landscape.jpeg encoded.png")
     print("")
+
+def preprocess_image(pixels):
+    for y in range(len(pixels)):
+        for x in range(len(pixels[0])):
+            color = list(pixels[y][x])
+            for i in range(3):
+                if potential_collision(color[i]):
+                    direction = 1 if color[i] == 0 else -1
+                    color[i] += direction * random.choices([0,1,2,3])[0]
+            pixels[y][x] = tuple(color)
+    return pixels
+
+def preprocess_comand(args):
+
+    if len(args) != 2:
+        print_usage()
+        sys.exit()
+
+    image_path = args[0]
+    output_image_path = args[0]
+    print(f"Preprocessing {image_path} ...")
+    
+    pixels = load_image_pixels(image_path)
+    height = len(pixels)
+    width = len(pixels[0])
+
+    collisions = count_potential_collisions(pixels)
+    percentage = collisions * 100 / (height*width*3)
+    
+    print(f"Found {collisions} / {height*width*3} = {percentage:.2f}% RGB values with potential collisions")
+    if collisions > 0:
+        print(f"Removing collisions ...")
+
+        pixels = preprocess_image(pixels)
+        collisions = count_potential_collisions(pixels)
+        percentage = collisions * 100 / (height*width*3)
+        
+        print(f"Reduced to {collisions} / {height*width*3} = {percentage:.2f}% RGB values with potential collisions")
+
+        image = to_image(pixels)
+        image.save(output_image_path)
+        
+    print(f"Successfully preprocessed {image_path} -> {output_image_path}")
 
 
 def encode_command(args):
@@ -216,6 +280,8 @@ def main(args):
         encode_file_command(args[1:])
     elif args[0] == "decode":
         decode_command(args[1:])
+    elif args[0] == "preprocess":
+        preprocess_comand(args[1:])
     else:
         print_usage()
         sys.exit()
