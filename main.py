@@ -143,10 +143,12 @@ def decompress_message(_bytes): # TODO
 def print_usage():
     print("Usage:")
     print("   Encode a message: python main.py encode [message] [input image] [output image]")
+    print("   Encode a message: python main.py encode_file [file] [input image] [output image]")
     print("   Decode a message: python main.py decode [original image] [encoded image]")
     print("")
     print("Demo:")
     print("   python main.py encode \"Hi, I'm kyle\!\" landscape.jpeg encoded.png")
+    print("   python main.py encode_file bee_movie_excerpt.txt landscape.jpeg encoded.png")
     print("   python main.py decode landscape.jpeg encoded.png")
     print("")
 
@@ -162,6 +164,26 @@ def encode_command(args):
     encoded_path = args[2]
     
     print(f"Input message: {input_message}")
+    print(f"Encoding message into {image_path} ...")
+
+    encode_image(input_message.encode("UTF-8"), image_path, encoded_path)
+    
+    print(f"Successfully created {encoded_path}")
+
+def encode_file_command(args):
+
+    if len(args) != 3:
+        print_usage()
+        sys.exit()
+
+    input_file = args[0]
+    image_path = args[1]
+    encoded_path = args[2]
+
+    with open(input_file, "r") as f:
+        input_message = f.read()
+    
+    print(f"Input file: {input_file}")
     print(f"Encoding message into {image_path} ...")
 
     encode_image(input_message.encode("UTF-8"), image_path, encoded_path)
@@ -190,6 +212,8 @@ def main(args):
 
     if args[0] == "encode":
         encode_command(args[1:])
+    if args[0] == "encode_file":
+        encode_file_command(args[1:])
     elif args[0] == "decode":
         decode_command(args[1:])
     else:
