@@ -10,8 +10,8 @@ def to_image(data):
     image = Image.new("RGB", (width, height), (0, 0, 0))
     pixels = image.load()
 
-    for x in range(width):
-        for y in range(height):
+    for y in range(height):
+        for x in range(width):
             pixels[x, y] = data[y][x]
 
     return image

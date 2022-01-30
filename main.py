@@ -191,7 +191,7 @@ def preprocess_comand(args):
         sys.exit()
 
     image_path = args[0]
-    output_image_path = args[0]
+    output_image_path = args[1]
     print(f"Preprocessing {image_path} ...")
     
     pixels = load_image_pixels(image_path)
