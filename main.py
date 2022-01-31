@@ -169,10 +169,10 @@ def print_usage():
     print("   Decode a message: python main.py decode [original image] [encoded image]")
     print("")
     print("Demo:")
-    print("   python main.py encode \"Hi, I'm kyle\!\" landscape.jpeg encoded.png")
-    print("   python main.py encode_file bee_movie.txt landscape.jpeg encoded.png")
-    print("   python main.py preprocess landscape.jpeg landscape.jpeg")
-    print("   python main.py decode landscape.jpeg encoded.png")
+    print("   python main.py encode \"Hi, I'm kyle\!\" lazy_lion.jpeg encoded.png")
+    print("   python main.py encode_file bee_movie.txt lazy_lion.jpeg encoded.png")
+    print("   python main.py preprocess lazy_lion.jpeg lazy_lion.jpeg")
+    print("   python main.py decode lazy_lion.jpeg encoded.png")
     print("")
 
 def preprocess_image(pixels):
