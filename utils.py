@@ -58,7 +58,7 @@ def add_white_boarder(image, thickness=1):
 # to convert to mp4
 # ffmpeg -i %d.png -vcodec mpeg4 output.mp4
 
- 
+
 def load_image_pixels(path):
     im = Image.open(path)
     return to_pixels(im)

@@ -71,6 +71,8 @@ def encode_image(_bytes, original_image_path, encoded_image_path):
     for i, three_bits in enumerate(three_at_a_time):
         x = i % width
         y = i // width
+        # if i <= len(encoded_bits) and any(potential_collision(x) for x in pixels[y][x]):
+        #     print("potential collision", pixels[y][x], three_bits)
         pixels[y][x] = encode_pixel(pixels[y][x], three_bits)
 
     encoded_image = to_image(pixels)
